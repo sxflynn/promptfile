@@ -11,6 +11,8 @@ IGNORE_PATTERNS: List[str] = [
     '.*',                  # Skip hidden files/directories (those starting with a dot)
     'node_modules',        # Skip node_modules directory (non-Python, but common in JS hybrid repos)
     'package-lock.json',   # Skip JS lock files
+    'coverage',            # Ignore coverage output folders
+    'lcov-report',         # Ignore lcov HTML report folders
     'build',               # Skip build directories (e.g. for wheels, setuptools)
     'dist',                # Skip dist directories
     'target',              # Skip compiled output (used in some hybrid setups)
@@ -27,9 +29,14 @@ IGNORE_PATTERNS: List[str] = [
     '.env',                # Skip dotenv config files
     '.venv',               # Skip virtualenv dirs
     'venv',                # Common venv dir name
-    'LICENSE',             # Skip license files
+    'LICENSE',             # LICENSE
+    'LICENSE.*',           # Match LICENSE.md, LICENSE.txt, etc.
     '*bruno*',             # Project-specific skip
     'poetry.lock',         # Skip Poetry lockfile
+    '*.png',
+    '*.svg',
+    '*.jpeg',
+    '*.jpg'
 ]
 
 def should_ignore(name: str) -> bool:
@@ -41,7 +48,11 @@ def should_ignore(name: str) -> bool:
 
 
 def process_directory(base_dir: str, output_to_file: bool) -> None:
-    output_lines: List[str] = []
+    output_path: str = "prompt.txt"
+
+    if output_to_file:
+        with open(output_path, "w", encoding="utf-8"):
+            pass
 
     for root, dirs, files in os.walk(base_dir):
         dirs[:] = [d for d in dirs if not should_ignore(d)]
@@ -61,15 +72,13 @@ def process_directory(base_dir: str, output_to_file: bool) -> None:
             except Exception as e:
                 file_output.append(f"Error reading file: {e}")
 
-            file_output.append("")  # Extra newline
-            if output_to_file:
-                output_lines.extend(file_output)
-            else:
-                print("\n".join(file_output))
+            file_output.append("")
 
-    if output_to_file:
-        with open("prompt.txt", "w", encoding="utf-8") as out_file:
-            out_file.write("\n".join(output_lines))
+            if output_to_file:
+                with open(output_path, "a", encoding="utf-8") as out_file:
+                    out_file.write("\n".join(file_output) + "\n")
+            else:
+                print("\n" + "\n".join(file_output))
 
 
 def main() -> None:
@@ -83,9 +92,9 @@ def main() -> None:
         help="Path to the directory (relative or absolute). Defaults to current directory."
     )
     parser.add_argument(
-        "--file", "-F",
+        "--out", "-O",
         action="store_true",
-        help="Write output to prompt.txt instead of printing to console"
+        help="Write output to stdout instead of a file (default is prompt.txt)"
     )
 
     args: argparse.Namespace = parser.parse_args()
@@ -96,7 +105,8 @@ def main() -> None:
         print(f"Provided path is not a directory: {base_dir}")
         sys.exit(1)
 
-    process_directory(base_dir, output_to_file=args.file)
+    output_to_file: bool = not args.out
+    process_directory(base_dir, output_to_file=output_to_file)
 
 
 if __name__ == '__main__':  # pragma: no cover

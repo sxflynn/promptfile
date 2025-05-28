@@ -36,7 +36,11 @@ IGNORE_PATTERNS: List[str] = [
     '*.png',
     '*.svg',
     '*.jpeg',
-    '*.jpg'
+    '*.jpg',
+    '*.cmd',
+    'HELP.md',
+    'mvnw',
+    'prompt.txt'
 ]
 
 def should_ignore(name: str) -> bool:
